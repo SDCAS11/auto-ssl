@@ -21,7 +21,10 @@ jobs:
 
     - name: Install & Configure acme.sh
       run: |
-        curl  https://get.acme.sh | sh -s email=${{ secrets.EMAIL }}
+        curl https://get.acme.sh | sh -s email=${{ secrets.EMAIL }}
+        source ~/.bashrc  # 确保加载环境变量
+        ls -l /home/runner/.acme.sh/  # 确认安装路径
+        $ACME --install
 
     - name: Verify acme.sh installation
       run: |
