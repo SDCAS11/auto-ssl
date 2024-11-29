@@ -18,15 +18,21 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
     - name: Install & Configure acme.sh
       run: |
-        curl  https://get.acme.sh | sh -s email=$EMAIL
+        curl  https://get.acme.sh | sh -s email=${{ secrets.EMAIL }}
+
+    - name: Verify acme.sh installation
+      run: |
+        $ACME --version
+
     - name: Issue & Deploy Certificates
       run: |
-        export CF_Account_ID=$CF_ACCOUNT_ID
-        export CF_Token=$CF_TOKEN
+        export CF_Account_ID=${{ secrets.CF_ACCOUNT_ID }}
+        export CF_Token=${{ secrets.CF_TOKEN }}
 
-        git config --global user.email $EMAIL
+        git config --global user.email ${{ secrets.EMAIL }}
         git config --global user.name acme
 
         check_certificate_validity() {
@@ -55,7 +61,7 @@ jobs:
           key_file="$cert_path/$domain.key"
 
           issue_status=0
-          $ACME --issue --server $acme_server --debug --dns dns_cf -d "$domain" -d "*.$domain" ${keylength:+--keylength $keylength} || issue_status=$?
+          $ACME --issue --server $acme_server --debug 2 --dns dns_cf -d "$domain" -d "*.$domain" ${keylength:+--keylength $keylength} || issue_status=$?
           if [ $issue_status -ne 0 ]; then
             echo "Failed to issue $cert_type certificate for $domain, skipping..."
             return
@@ -85,6 +91,7 @@ jobs:
           fi
 
         done < cloudflare_domains_list.txt
+
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
