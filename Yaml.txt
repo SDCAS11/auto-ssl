@@ -1,0 +1,30 @@
+name: Renew Domains
+
+on:
+  schedule:
+    - cron: '0 0 1 1 *' # 每年1月1日00:00
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install Cloudflare CLI
+      run: npm install -g cloudflare-cli
+
+    - name: Renew Domains
+      env:
+        CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      run: |
+        cfcli login --api-token $CF_API_TOKEN
+        while IFS= read -r domain; do
+          cfcli renew "$domain" --api-token=$CF_API_TOKEN --account-id=$CF_ACCOUNT_ID
+        done < $GITHUB_WORKSPACE/domains.txt
